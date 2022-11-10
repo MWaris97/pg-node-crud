@@ -5,6 +5,8 @@ const port = 3000
 
 const pool = require('./dbConn')
 
+const TODO_BASE_ROUTE = '/todo';
+
 app.use(bodyParser.json())
 app.use(
   bodyParser.urlencoded({
@@ -16,29 +18,41 @@ app.get('/', (request, response) => {
   response.json({ info: 'Node.js, Express, and Postgres API' })
 })
 
-app.get('/testdb', async (request, response) => {
+app.get(TODO_BASE_ROUTE, async (request, response) => {
   let res = await pool.query('select * from public.todoList')
   response.json({
     todo: res.rows
   })
 })
 
-app.post('/todo/create', async (req, res) => {
-  let result = await pool.query(`INSERT INTO public.todolist
+app.post(TODO_BASE_ROUTE, async (req, res) => {
+  await pool.query(`INSERT INTO public.todolist
   (id, task, done)
-  VALUES($1, $2, $3)`, 
-  [req.body.id, req.body.task, req.body.done])
-  console.log(result);
+  VALUES($1, $2, $3)`,
+    [req.body.id, req.body.task, req.body.done])
   res.json({
     "status": "Task created"
   })
 })
 
-// app.get('/users', db.getUsers)
-// app.get('/users/:id', db.getUserById)
-// app.post('/users', db.createUser)
-// app.put('/users/:id', db.updateUser)
-// app.delete('/users/:id', db.deleteUser)
+
+app.put(TODO_BASE_ROUTE, async (req, res) => {
+  await pool.query(`UPDATE public.todolist
+  SET task=$1, done=$2
+  WHERE id=$3`,
+    [req.body.task, req.body.done, req.body.id])
+  res.json({
+    "status": "Task updated"
+  })
+})
+
+app.delete(TODO_BASE_ROUTE + '/:id', async (req, res) => {
+  await pool.query(`delete from public.todolist WHERE id=$1`,
+    [req.params.id])
+    res.json({
+      "status": "Task deleted"
+    })
+})
 
 app.listen(port, () => {
   console.log(`App running on port ${port}.`)
