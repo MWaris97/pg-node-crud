@@ -4,8 +4,11 @@ const app = express()
 const port = 3000
 
 const pool = require('./dbConn')
+const TodoController = require('./controllers/todoController')
 
 const TODO_BASE_ROUTE = '/todo';
+
+const todoController = new TodoController()
 
 app.use(bodyParser.json())
 app.use(
@@ -18,22 +21,9 @@ app.get('/', (request, response) => {
   response.json({ info: 'Node.js, Express, and Postgres API' })
 })
 
-app.get(TODO_BASE_ROUTE, async (request, response) => {
-  let res = await pool.query('select * from public.todoList')
-  response.json({
-    todo: res.rows
-  })
-})
+app.get(TODO_BASE_ROUTE, todoController.getAll)
 
-app.post(TODO_BASE_ROUTE, async (req, res) => {
-  await pool.query(`INSERT INTO public.todolist
-  (id, task, done)
-  VALUES($1, $2, $3)`,
-    [req.body.id, req.body.task, req.body.done])
-  res.json({
-    "status": "Task created"
-  })
-})
+app.post(TODO_BASE_ROUTE, todoController.createTask)
 
 
 app.put(TODO_BASE_ROUTE, async (req, res) => {
